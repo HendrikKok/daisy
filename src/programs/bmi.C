@@ -45,7 +45,7 @@ DaisyBMI::DaisyBMI()
 
 DaisyBMI::~DaisyBMI()
 {
-  // DaisyPythonController destructor handles cleanup
+  // DaisyController destructor handles cleanup
 }
 
 // ===== LIFECYCLE =====
@@ -305,18 +305,10 @@ void DaisyBMI::set_value(const std::string& name, const double* src)
   }
   if (name == "irrigation__rate")
   {
-    // TODO: expose irrigation setter in DaisyPythonController
+    // TODO: expose irrigation setter in DaisyController
     // ctrl_.set_irrigation_rate(src[0]);
-    throw std::runtime_error("irrigation__rate setter not yet implemented in DaisyPythonController");
+    throw std::runtime_error("irrigation__rate setter not yet implemented in DaisyController");
   }
   throw std::invalid_argument("Unknown input variable: " + name);
-}
-
-auto DaisyBMI::estimate_sy_perturbation(double dh_cm, unsigned int col)
-  -> std::tuple<double, std::vector<double>, std::vector<double>>
-{
-  if (col != 0u)
-    throw std::invalid_argument("estimate_sy_perturbation: col > 0 not yet supported via DaisyBMI");
-  return ctrl_.estimate_sy_perturbation(dh_cm);
 }
 

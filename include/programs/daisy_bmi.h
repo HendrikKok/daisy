@@ -20,7 +20,7 @@ class Toplevel;
 class Daisy;
 
 /**
- * @class DaisyPythonController
+ * @class DaisyController
  * @brief Python-friendly interface to control Daisy simulation externally
  * 
  * Allows Python code to:
@@ -30,7 +30,7 @@ class Daisy;
  * - Set boundary conditions (GW depth, rainfall, irrigation, etc.)
  * - Control simulation parameters
  */
-class DaisyPythonController
+class DaisyController
 {
 private:
   // Toplevel owns Metalib, parser, Treelog, and the Daisy program instance.
@@ -181,12 +181,14 @@ public:
   bool set_groundwater_depth(double depth_cm);
 
   /**
-   * Estimate specific yield via GW head perturbation + Richards re-solve.
+   * Re-run Richards with GW table raised by dh_cm and return perturbed
+   * {theta, flux_mm_d, h_cm} arrays.  Daisy state is restored to the
+   * real post-tick result afterwards (RAII guard).
+   * Sy is computed by the caller: Sy = sum((theta_C-theta_B)*dz) / dh.
    * @param dh_cm  Head perturbation in cm (default 1 cm)
-   * @return Estimated Sy [-]
    */
-  std::tuple<double, std::vector<double>, std::vector<double>>
-    estimate_sy_perturbation(double dh_cm = 1.0);
+  std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+    perturbation_tick(double dh_cm = 1.0);
 
   /**
    * Get pressure head at specific depth
@@ -457,20 +459,20 @@ public:
   /**
    * Constructor
    */
-  DaisyPythonController();
+  DaisyController();
   
   /**
    * Destructor
    */
-  ~DaisyPythonController();
+  ~DaisyController();
   
   // Delete copy operations
-  DaisyPythonController(const DaisyPythonController&) = delete;
-  DaisyPythonController& operator=(const DaisyPythonController&) = delete;
+  DaisyController(const DaisyController&) = delete;
+  DaisyController& operator=(const DaisyController&) = delete;
   
   // Allow move operations
-  DaisyPythonController(DaisyPythonController&&) noexcept;
-  DaisyPythonController& operator=(DaisyPythonController&&) noexcept;
+  DaisyController(DaisyController&&) noexcept;
+  DaisyController& operator=(DaisyController&&) noexcept;
 };
 
 #endif // DAISY_PYTHON_CONTROLLER_H
