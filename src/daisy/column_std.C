@@ -57,6 +57,7 @@
 #include "object_model/frame_model.h"
 #include "object_model/block_model.h"
 #include "util/mathlib.h"
+#include "daisy/richards_snapshots.h"
 #include <sstream>
 
 struct ColumnStandard : public Column
@@ -94,6 +95,14 @@ struct ColumnStandard : public Column
   std::vector<double> theta_array_cached_;         // [-], volumetric water content
   std::vector<double> theta_sat_cached_;           // [-], saturated θ (static soil param)
   mutable double runoff_rate_cached_ = 0.0;        // [mm], accumulated since last read
+
+  // Richards solver context — needed to re-run movement->tick() in perturbation_tick().
+  Time             time_last_;
+  const Weather*   weather_last_ = nullptr;
+  const Scope*     scope_last_   = nullptr;
+  // Pre/post-Richards snapshots.  snap_pre() is called just before movement->tick(),
+  // snap_post() just after.  perturbation_tick() uses both to run atomically.
+  RichardsSnapshots snapshots_;
 
   // Log variables.
   double yield_DM;
@@ -204,6 +213,8 @@ public:
   std::vector<double> get_theta_array () const override;
   std::vector<double> get_theta_sat_array () const override;
   double get_runoff_rate () const override;
+  std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+    perturbation_tick (double dh_cm) override;
 
   // Simulation.
   void clear ();
@@ -870,6 +881,8 @@ ColumnStandard::tick_move (const Metalib& metalib,
                    surface->temperature (), dt, msg);
   soil_water->reset_old (); // Set Theta_old to Theta here.
 
+  // Snapshot A: h, theta, S_sum and GW table just before Richards solve.
+  snapshots_.snap_pre (*soil_water, *groundwater);
   chemistry->mass_balance (geometry, *soil_water);
   soil_water->tick_ice (geometry, *soil, dt, msg); 
   movement->tick (*soil, *soil_water, *soil_heat,
@@ -917,6 +930,9 @@ ColumnStandard::tick_move (const Metalib& metalib,
   // BMI: cache post-Richards arrays and runoff for BMI getters.
   {
     const size_t n = geometry.cell_size ();
+    time_last_    = time_end;
+    weather_last_ = weather.get () ? weather.get () : global_weather;
+    scope_last_   = extern_scope;
 
     bottom_flux_cached_ = soil_water->q_matrix (n);
 
@@ -930,6 +946,9 @@ ColumnStandard::tick_move (const Metalib& metalib,
         theta_array_cached_[i] = soil_water->Theta (i);        // [-]
       }
     runoff_rate_cached_ += surface->runoff_rate () * surface->ponding_average () * dt; // [mm]
+
+    // Snapshot B: post-Richards state for atomic restore in perturbation_tick().
+    snapshots_.snap_post (*soil_water, *groundwater);
   }
 }
 
@@ -1472,4 +1491,60 @@ ColumnStandard::get_runoff_rate () const
   const double v = runoff_rate_cached_;
   runoff_rate_cached_ = 0.0;
   return v;
+}
+
+auto ColumnStandard::perturbation_tick (double dh_cm)
+  -> std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+{
+  const std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> failed
+    = {{}, {}, {}};
+
+  if (!weather_last_ || !scope_last_ || !snapshots_.ready ())
+    return failed;
+
+  // Clamp dh so GW cannot be raised above the surface.
+  // If table_pre() == 0 the groundwater object uses free drainage (no imposed
+  // table); the actual water table is implicit in the h-field.  In that case
+  // we fall back to the column bottom depth so small perturbations always pass.
+  const double gw        = snapshots_.table_pre ();   // [cm], neg = below surface
+  const double limit     = (gw < 0.0) ? -gw : -geometry.bottom ();
+  const double dh_safe   = std::min (dh_cm, limit);
+  if (dh_safe <= 0.0)
+    return failed;
+
+  const size_t n = geometry.cell_size ();
+
+  // RAII guard: always restore to snapshot B when this scope exits.
+  struct Guard
+  {
+    ColumnStandard& col;
+    ~Guard () { col.snapshots_.restore_post (*col.soil_water, *col.groundwater); }
+  } guard {*this};
+
+  // Restore to snapshot A and raise GW by dh_safe.
+  snapshots_.restore_pre (*soil_water, *groundwater);
+  groundwater->set_table (snapshots_.table_pre () + dh_safe);
+
+  // Re-run Richards only — not the full tick_move.
+  soil_water->reset_old ();
+  try
+    {
+      movement->tick (*soil, *soil_water, *soil_heat,
+                      *surface, *groundwater,
+                      time_last_, *scope_last_, *weather_last_,
+                      24.0, Treelog::null ());
+    }
+  catch (...) {}
+
+  // Read perturbed result — Sy is computed by the caller.
+  std::vector<double> theta_C (n), flux_C (n), h_C (n);
+  for (size_t i = 0; i < n; ++i)
+    {
+      theta_C[i] = soil_water->Theta (i);
+      h_C[i]     = soil_water->h (i);
+      flux_C[i]  = soil_water->q_matrix (i + 1) * 10.0 * 24.0; // cm/h → mm/day
+    }
+
+  return {theta_C, flux_C, h_C};
+  // Guard destructor fires here → snapshots_.restore_post() restores state B.
 }

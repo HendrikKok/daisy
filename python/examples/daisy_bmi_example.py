@@ -66,6 +66,6 @@ for itime in np.arange(end_time-1):
     if gwl is None:
         print(f'gwl at day {t:.1f} is below Daisy column')
     else:
-        print(f'gwl at day {t:.1f} is {gwl}')
+        print(f'gwl at day {t:.1f} is {gwl:.3f} m')
 
 api.finalize()
