@@ -1541,14 +1541,17 @@ auto ColumnStandard::perturbation_tick (double dh_cm)
   if (!weather_last_ || !scope_last_ || !snapshots_.ready ())
     return failed;
 
-  // Clamp dh so GW cannot be raised above the surface.
-  // If table_pre() == 0 the groundwater object uses free drainage (no imposed
-  // table); the actual water table is implicit in the h-field.  In that case
-  // we fall back to the column bottom depth so small perturbations always pass.
+  // Clamp dh so GW cannot be raised above the surface or lowered below the
+  // column bottom.  If table_pre() == 0 the groundwater object uses free
+  // drainage (no imposed table); the actual water table is implicit in the
+  // h-field.  In that case we fall back to the column extents so small
+  // perturbations always pass.
   const double gw        = snapshots_.table_pre ();   // [cm], neg = below surface
-  const double limit     = (gw < 0.0) ? -gw : -geometry.bottom ();
-  const double dh_safe   = std::min (dh_cm, limit);
-  if (dh_safe <= 0.0)
+  const double upper     = (gw < 0.0) ? -gw : -geometry.bottom (); // max raise [cm]
+  const double lower     = geometry.bottom () - gw;                 // max lower [cm], <= 0
+  const double dh_safe   = (dh_cm >= 0.0) ? std::min (dh_cm, upper)
+                                           : std::max (dh_cm, lower);
+  if (!(dh_safe > 0.0) && !(dh_safe < 0.0))
     return failed;
 
   const size_t n = geometry.cell_size ();
@@ -1560,7 +1563,7 @@ auto ColumnStandard::perturbation_tick (double dh_cm)
     ~Guard () { col.snapshots_.restore_post (*col.soil_water, *col.groundwater); }
   } guard {*this};
 
-  // Restore to snapshot A and raise GW by dh_safe.
+  // Restore to snapshot A and shift GW by dh_safe.
   snapshots_.restore_pre (*soil_water, *groundwater);
   groundwater->set_table (snapshots_.table_pre () + dh_safe);
 

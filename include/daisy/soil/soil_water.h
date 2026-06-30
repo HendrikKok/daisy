@@ -173,6 +173,8 @@ public:
   void set_matrix (const std::vector<double>& h,
                    const std::vector<double>& Theta,
                    const std::vector<double>& q);
+  void restore_S_sum (const std::vector<double>& v)
+  { S_sum_ = v; }
   void set_tertiary (const std::vector<double>& Theta_p,
                      const std::vector<double>& q_p,
                      const std::vector<double>& S_B2M,
