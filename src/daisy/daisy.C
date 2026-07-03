@@ -584,11 +584,11 @@ Daisy::set_groundwater_table (double cm, unsigned int pos)
   if (col) col->set_groundwater_table (cm);
 }
 
-auto Daisy::perturbation_tick (double dh_cm, unsigned int pos)
+auto Daisy::perturbation_tick (double dh_cm, double dt_days, unsigned int pos)
   -> std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
 {
   Column* col = impl->field->find (pos);
-  return col ? col->perturbation_tick (dh_cm)
+  return col ? col->perturbation_tick (dh_cm, dt_days)
              : std::make_tuple (std::vector<double>{},
                                 std::vector<double>{},
                                 std::vector<double>{});

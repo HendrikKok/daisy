@@ -71,7 +71,7 @@ public:
   double get_groundwater_table (unsigned int pos = 0u) const; // [cm]
   void   set_groundwater_table (double cm, unsigned int pos = 0u);
   std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick (double dh_cm, unsigned int pos = 0u);
+    perturbation_tick (double dh_cm, double dt_days, unsigned int pos = 0u);
   /** Hours from simulation start to the configured stop time, or -1 if open-ended. */
   double stop_duration_hours() const;
 

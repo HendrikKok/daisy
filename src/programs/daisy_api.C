@@ -4,11 +4,11 @@
 #include "daisy/daisy.h"
 #include <stdexcept>
 
-auto DaisyAPI::perturbation_tick (double dh_cm, unsigned int col)
+auto DaisyAPI::perturbation_tick (double dh_cm, double dt_days, unsigned int col)
   -> std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
 {
   if (col != 0u)
     throw std::invalid_argument (
       "perturbation_tick: col > 0 not yet supported");
-  return daisy ().perturbation_tick (dh_cm);
+  return daisy ().perturbation_tick (dh_cm, dt_days);
 }

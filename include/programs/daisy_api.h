@@ -22,22 +22,23 @@ public:
   // ===== PERTURBATION / Sy ESTIMATION =====
 
   /**
-   * Re-run Richards with the groundwater table raised by dh_cm and return
-   * the perturbed state.  Daisy is always restored to the real post-tick
-   * result via a RAII guard — even if Richards throws.
+   * Estimate GW sensitivity by running two replay Richards solves (A at real
+   * GW, B at GW+dh_cm) from the same t=0 initial state with daily-average
+   * S_sum.  Returns theta_B - theta_A so replay artifacts cancel.
    *
-   * The caller computes Sy externally:
-   *   theta_B = bmi.get_value_array("soil_water__content")  # normal post-tick
-   *   theta_C, flux_C, h_C = api.perturbation_tick(dh_cm)
-   *   Sy = sum((theta_C[i] - theta_B[i]) * dz[i] for i) / dh_cm
+   * Daisy is always restored to the real post-day result via a RAII guard.
+   *
+   * The caller computes Sy directly:
+   *   delta_theta, _, _ = api.perturbation_tick(dh_cm)
+   *   Sy = delta_theta / dh_cm          # no theta_B subtraction needed
    *
    * @param dh_cm  GW table perturbation in cm (default 1 cm, upward = positive)
    * @param col    Column index (default 0; multi-column not yet supported)
-   * @return       tuple(theta_C [-], flux_mm_d [mm/day], h_C [cm])
+   * @return       tuple(delta_theta [-], flux_mm_d [mm/day], h_C [cm])
    *               — all arrays have length == number of soil layers
    */
   std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick(double dh_cm = 1.0, unsigned int col = 0u);
+    perturbation_tick(double dh_cm = 1.0, double dt_days = 1.0, unsigned int col = 0u);
 };
 
 #endif // DAISY_API_H

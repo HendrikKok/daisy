@@ -7,7 +7,7 @@ set PATH=C:\msys64\ucrt64\bin;C:\msys64\usr\bin;%PATH%
 cd c:\src\daisy
 
 rem configure (paths defined in CMakeUserPresets.json)
-cmake --preset mingw-gcc-native-local
+rem cmake --preset mingw-gcc-native-local
 
 rem build the core
 rem cmake --build build/release --target daisy_bmi -j

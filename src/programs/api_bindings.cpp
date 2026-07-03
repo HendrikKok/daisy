@@ -147,8 +147,9 @@ PYBIND11_MODULE(daisy_bmi, m)
 
     .def("perturbation_tick",
          &DaisyAPI::perturbation_tick,
-         py::arg("dh_cm") = 1.0,
-         py::arg("col")   = 0u,
+         py::arg("dh_cm")   = 1.0,
+         py::arg("dt_days") = 1.0,
+         py::arg("col")     = 0u,
          R"pbdoc(
  Re-run Richards with the GW table raised by dh_cm and return the perturbed
  soil state.  Daisy is always restored to the real post-tick result (RAII guard).

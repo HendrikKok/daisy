@@ -160,7 +160,7 @@ public:
   // Sy is computed by the caller: Sy = Σ((θ_C−θ_B)·Δz) / dh.
   // Default: no-op returning empty arrays.
   virtual std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick (double /*dh_cm*/)
+    perturbation_tick (double /*dh_cm*/, double /*dt_days*/)
     { return std::make_tuple (std::vector<double>{},
                               std::vector<double>{},
                               std::vector<double>{}); }
