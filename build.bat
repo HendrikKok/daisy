@@ -10,9 +10,9 @@ rem configure (paths defined in CMakeUserPresets.json)
 cmake --preset mingw-gcc-native-local
 
 rem build the core
-cmake --build build/release --target core
+rem cmake --build build/release --target daisy_bmi -j
 
 rem rebuild only the .pyd target
-cmake --build build/release --target daisy_bmi
+cmake --build build/release --target daisy_bmi -j
 
 pause

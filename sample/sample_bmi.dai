@@ -1,23 +1,16 @@
-;;; sample_bmi.dai --- Daisy setup for BMI coupling with fixed groundwater.
+;;; sample_bmi.dai --- Daisy setup for BMI coupling.
 
-;; Same inputs as sample.dai
 (input file "fertilizer.dai")
 (input file "tillage.dai")
 (input file "crop.dai")
 (input file "dk-management.dai")
 (input file "irrigation.dai")
 (input file "init-soil.dai")
+(input file "../lib/log.dai")
 
-;; Inherit JB1_init_Cosby (30 cm Ap + 120 cm C, total 150 cm).
-;; Closed bottom (zero flux) with initial water table at -130 cm.
-;; Below the WT, h > 0 (saturated). Above, capillary equilibrium.
 (defcolumn JB1_bmi JB1_init_Cosby
-  "JB1 column with closed lower boundary and initial water table at -130 cm."
-  (Groundwater flux 0)
-  (SoilWater (initial_h (-50  [cm]  -80 [cm])   ; unsaturated near surface
-                        (-100 [cm]  -30 [cm])   ; approaching saturation
-                        (-130 [cm]    0 [cm])   ; water table at -130 cm
-                        (-150 [cm]   20 [cm])))) ; saturated at bottom
+  "JB1 column with API-controlled groundwater table for BMI coupling."
+  (Groundwater api))
 
 (weather default "dk-taastrup.dwf")
 
@@ -34,7 +27,8 @@
     (activity irrigate_30_content_overhead irrigate_30_content_overhead))
   "SBarley & Pea")
 
-;; No output (driven externally via BMI)
-(output)
+(output ("Soil Water Potential"
+         (when daily)
+         (where "soil_h.dlf")))
 
 ;;; sample_bmi.dai ends here

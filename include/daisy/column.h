@@ -165,6 +165,7 @@ public:
                               std::vector<double>{},
                               std::vector<double>{}); }
 
+
   // Current development stage for the crop named "crop", or
   // Crop::DSremove if no such crop is present.
   virtual double crop_ds (symbol crop) const = 0; 

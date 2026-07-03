@@ -152,8 +152,22 @@ PYBIND11_MODULE(daisy_bmi, m)
          R"pbdoc(
  Re-run Richards with the GW table raised by dh_cm and return the perturbed
  soil state.  Daisy is always restored to the real post-tick result (RAII guard).
-         )pbdoc")
 
+ The step accumulator is cleared automatically after each call, so the next
+ update_until() starts a fresh day.
 
-    ;
+ Returns
+ -------
+ tuple(theta_C, flux_mm_d, h_C)
+   theta_C    : list[float]  volumetric water content per layer  [-]
+   flux_mm_d  : list[float]  downward flux at bottom of each layer [mm/day]
+   h_C        : list[float]  pressure head per layer  [cm]
+
+ Typical usage::
+
+   api.update_until(t + 1.0)          # runs 24 internal hourly steps
+   theta_B = api.get_value_array("soil_water__content")
+   theta_C, _, _ = api.perturbation_tick(dh_cm)
+   Sy = (theta_C - theta_B) / dh_cm
+         )pbdoc");
 }
