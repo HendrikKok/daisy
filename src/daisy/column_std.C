@@ -58,6 +58,7 @@
 #include "object_model/block_model.h"
 #include "util/mathlib.h"
 #include "daisy/richards_snapshots.h"
+#include <cmath>
 #include <sstream>
 
 struct ColumnStandard : public Column
@@ -111,8 +112,11 @@ struct ColumnStandard : public Column
   // then clears the vectors so the next update_until() starts fresh.
   std::vector<double>              h_day_A_;         // h at first tick (≈ t=0)
   std::vector<double>              theta_day_A_;     // theta at first tick
+  std::vector<double>              q_day_A_;         // matrix flux at first tick [cm/h]
   double                           gw_day_A_ = 0.0; // GW table at first tick
   std::vector<std::vector<double>> day_S_sum_steps_; // S_sum per internal step
+  std::vector<std::vector<double>> day_T_steps_;     // soil temperature per step [dg C]
+  std::vector<std::vector<double>> day_h_ice_steps_; // ice pressure per step [cm]
   std::vector<double>              day_step_dts_;    // dt per step [h]
   std::vector<double>              day_pond_steps_;  // surface ponding [mm] per step (top BC)
   double                           day_dt_accum_ = 0.0; // accumulated dt since last clear [h]
@@ -902,7 +906,7 @@ ColumnStandard::tick_move (const Metalib& metalib,
   chemistry->mass_balance (geometry, *soil_water);
   soil_water->tick_ice (geometry, *soil, dt, msg);
 
-  // Capture per-step S_sum, ponding and dt for perturbation replay.
+  // Capture per-step Richards forcing/state for perturbation replay.
   // Auto-reset when accumulated dt exceeds 24 h (new day) so skipped
   // perturbation_tick calls (e.g. spin-up) do not pollute the next day.
   {
@@ -911,6 +915,8 @@ ColumnStandard::tick_move (const Metalib& metalib,
       {
         // New day started — clear previous accumulation.
         day_S_sum_steps_.clear ();
+        day_T_steps_.clear ();
+        day_h_ice_steps_.clear ();
         day_step_dts_.clear ();
         day_pond_steps_.clear ();
         day_dt_accum_ = 0.0;
@@ -924,12 +930,17 @@ ColumnStandard::tick_move (const Metalib& metalib,
             h_day_A_[i]     = soil_water->h (i);
             theta_day_A_[i] = soil_water->Theta (i);
           }
+        q_day_A_.resize (geometry.edge_size ());
+        for (size_t e = 0; e < q_day_A_.size (); ++e)
+          q_day_A_[e] = soil_water->q_matrix (e);
         gw_day_A_ = groundwater->table ();
       }
     std::vector<double> step_s (n);
     for (size_t i = 0; i < n; ++i)
       step_s[i] = soil_water->S_sum (i);
     day_S_sum_steps_.push_back (std::move (step_s));
+    day_T_steps_.push_back (soil_heat->temperatures ());
+    day_h_ice_steps_.push_back (soil_water->h_ice_all ());
     day_step_dts_.push_back (dt);
     day_pond_steps_.push_back (surface->ponding_average ());
     day_dt_accum_ += dt;
@@ -1595,79 +1606,116 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
                                            : std::max (dh_cm, lower);
   if (!(dh_safe > 0.0) && !(dh_safe < 0.0))
     return failed;
+  // The API does not expose dh_safe.  Reject clamping so the caller cannot
+  // accidentally divide delta-theta by a different perturbation distance.
+  if ((dh_cm >= 0.0 && dh_cm > upper)
+      || (dh_cm < 0.0 && dh_cm < lower))
+    return failed;
 
   const size_t n = geometry.cell_size ();
 
-  // Output arrays — filled inside the replay block.
+  // Output arrays -- filled inside the replay block.
   std::vector<double> theta_C (n, 0.0), flux_C (n, 0.0), h_C (n, 0.0);
 
-  // RAII guard: always restore to snapshot B (end-of-day state) when scope exits.
+  // Restore every state changed by a replay, including surface, heat and ice.
   struct Guard
   {
     ColumnStandard& col;
-    ~Guard () { col.snapshots_.restore_post (*col.soil_water, *col.groundwater); }
-  } guard {*this};
-
-  if (!h_day_A_.empty () && !day_S_sum_steps_.empty ())
+    const std::vector<double> T;
+    const std::vector<double> h_ice;
+    const double ponding;
+    explicit Guard (ColumnStandard& c)
+      : col (c), T (c.soil_heat->temperatures ()),
+        h_ice (c.soil_water->h_ice_all ()),
+        ponding (c.surface->ponding_average ())
+    { }
+    ~Guard ()
     {
-      // Two replays from t=0 with daily-average S_sum/ponding.
-      // Artifacts (approximated weather, surface state) cancel in B - A.
-      // Only the GW perturbation drives delta_theta.
-      const double dt_day   = dt_days * 24.0; // [h] replay duration
-      const double dt_total  = [&]{ double s = 0.0; for (double d : day_step_dts_) s += d; return s; }();
+      col.snapshots_.restore_post (*col.soil_water, *col.groundwater);
+      col.soil_heat->restore_temperatures (T);
+      col.soil_water->restore_h_ice (h_ice);
+      col.surface->put_ponding (ponding);
+    }
+  } guard (*this);
 
-      std::vector<double> S_sum_avg (n, 0.0);
-      double pond_avg = 0.0;
-      for (size_t s = 0; s < day_S_sum_steps_.size (); ++s)
-        {
-          const double w = day_step_dts_[s] / dt_total;
-          for (size_t i = 0; i < n; ++i)
-            S_sum_avg[i] += day_S_sum_steps_[s][i] * w;
-          pond_avg += day_pond_steps_[s] * w;
-        }
+  const size_t steps = day_S_sum_steps_.size ();
+  bool replay_ok = steps > 0
+    && q_day_A_.size () == geometry.edge_size ()
+    && day_T_steps_.size () == steps
+    && day_h_ice_steps_.size () == steps
+    && day_step_dts_.size () == steps
+    && day_pond_steps_.size () == steps;
 
-      // Helper lambda: restore t=0 state and run one dt_day Richards tick.
-      auto run_replay = [&](double gw_table)
+  double recorded_hours = 0.0;
+  for (double dt : day_step_dts_)
+    recorded_hours += dt;
+  if (std::fabs (recorded_hours - dt_days * 24.0) > 1e-6)
+    replay_ok = false;
+
+  if (replay_ok)
+    {
+      // Restore t=0 and replay the real outer Richards timestep schedule.
+      // A and B receive identical S_sum, top BC, temperature and ice forcing.
+      auto run_replay = [&](double gw_table, std::vector<double>* flux_amount)
         {
-          for (size_t i = 0; i < n; ++i)
-            soil_water->set_content (i, h_day_A_[i], theta_day_A_[i]);
+          soil_water->set_matrix (h_day_A_, theta_day_A_, q_day_A_);
           groundwater->set_table (gw_table);
-          soil_water->restore_S_sum (S_sum_avg);
-          surface->put_ponding (pond_avg);
-          soil_water->reset_old ();
-          try
+          if (flux_amount)
+            flux_amount->assign (n, 0.0);
+
+          for (size_t s = 0; s < steps; ++s)
             {
-              movement->tick (*soil, *soil_water, *soil_heat,
-                              *surface, *groundwater,
-                              time_last_, *scope_last_, *weather_last_,
-                              dt_day, Treelog::null ());
+              soil_water->restore_S_sum (day_S_sum_steps_[s]);
+              soil_heat->restore_temperatures (day_T_steps_[s]);
+              soil_water->restore_h_ice (day_h_ice_steps_[s]);
+              surface->put_ponding (day_pond_steps_[s]);
+              soil_water->reset_old ();
+              try
+                {
+                  movement->tick (*soil, *soil_water, *soil_heat,
+                                  *surface, *groundwater,
+                                  time_last_, *scope_last_, *weather_last_,
+                                  day_step_dts_[s], Treelog::null ());
+                }
+              catch (...)
+                { return false; }
+
+              if (flux_amount)
+                for (size_t i = 0; i < n; ++i)
+                  (*flux_amount)[i] += soil_water->q_matrix (i + 1)
+                    * day_step_dts_[s];
             }
-          catch (...) {}
+          return true;
         };
 
-      // Run A (real GW) then B (perturbed GW).
-      run_replay (gw_day_A_);
-      std::vector<double> theta_A (n);
-      for (size_t i = 0; i < n; ++i)
-        theta_A[i] = soil_water->Theta (i);
-
-      run_replay (gw_day_A_ + dh_safe);
-      // theta_C = theta_B - theta_A (delta); caller: Sy = delta / dh_cm.
-      for (size_t i = 0; i < n; ++i)
-        theta_C[i] = soil_water->Theta (i) - theta_A[i];
-      for (size_t i = 0; i < n; ++i)
+      std::vector<double> theta_A (n), flux_amount_B;
+      replay_ok = run_replay (gw_day_A_, nullptr);
+      if (replay_ok)
         {
-          h_C[i]    = soil_water->h (i);
-          flux_C[i] = soil_water->q_matrix (i + 1) * 10.0 * 24.0;
+          for (size_t i = 0; i < n; ++i)
+            theta_A[i] = soil_water->Theta (i);
+          replay_ok = run_replay (gw_day_A_ + dh_safe, &flux_amount_B);
         }
+      if (replay_ok)
+        for (size_t i = 0; i < n; ++i)
+          {
+            theta_C[i] = soil_water->Theta (i) - theta_A[i];
+            h_C[i]     = soil_water->h (i);
+            flux_C[i]  = flux_amount_B[i] / recorded_hours * 10.0 * 24.0;
+          }
     }
 
   // Clear step data so the next update_until() starts a fresh accumulation.
   day_S_sum_steps_.clear ();
+  day_T_steps_.clear ();
+  day_h_ice_steps_.clear ();
   day_step_dts_.clear ();
   day_pond_steps_.clear ();
   day_dt_accum_ = 0.0;
 
+  if (!replay_ok)
+    return failed;
+
   return {theta_C, flux_C, h_C};
-  // Guard destructor fires here → snapshots_.restore_post() restores state B.
+  // Guard destructor restores the real end-of-day state.
 }

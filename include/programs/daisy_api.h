@@ -22,19 +22,21 @@ public:
   // ===== PERTURBATION / Sy ESTIMATION =====
 
   /**
-   * Estimate GW sensitivity by running two replay Richards solves (A at real
-   * GW, B at GW+dh_cm) from the same t=0 initial state with daily-average
-   * S_sum.  Returns theta_B - theta_A so replay artifacts cancel.
+   * Estimate GW sensitivity by running two Richards replays (A at real GW,
+   * B at GW+dh_cm) from the same t=0 state.  Both follow the recorded real-run
+   * timestep schedule and use identical per-step S_sum, ponding, temperature
+   * and ice state.  Returns theta_B - theta_A so replay artifacts cancel.
    *
    * Daisy is always restored to the real post-day result via a RAII guard.
    *
    * The caller computes Sy directly:
    *   delta_theta, _, _ = api.perturbation_tick(dh_cm)
-   *   Sy = delta_theta / dh_cm          # no theta_B subtraction needed
+    *   Sy = sum(delta_theta[i] * dz_cm[i]) / dh_cm
+    *                                      # no real-theta subtraction needed
    *
    * @param dh_cm  GW table perturbation in cm (default 1 cm, upward = positive)
    * @param col    Column index (default 0; multi-column not yet supported)
-   * @return       tuple(delta_theta [-], flux_mm_d [mm/day], h_C [cm])
+    * @return       tuple(delta_theta [-], average flux_B [mm/day], h_C [cm])
    *               — all arrays have length == number of soil layers
    */
   std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>

@@ -68,6 +68,10 @@ public:
   double freezing_rate (const std::size_t c) const;
   double T (std::size_t c) const	// [dg C]
   { return T_[c]; }
+  const std::vector<double>& temperatures () const
+  { return T_; }
+  void restore_temperatures (const std::vector<double>& values)
+  { T_ = values; }
   double conductivity (std::size_t c) const
   { return conductivity_[c]; }
   double top_flux (const Geometry& geo,

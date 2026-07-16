@@ -1,8 +1,8 @@
 // richards_snapshots.h
 //
 // General pre/post snapshot mechanism for the Richards solver state.
-// Owns two named slots (pre, post) for each state variable (h, theta, S_sum)
-// and the groundwater table scalar.
+// Owns two named slots (pre, post) for each state variable
+// (h, theta, S_sum, q_matrix) and the groundwater table scalar.
 //
 // Usage in tick_move:
 //   snapshots_.snap_pre (*soil_water, *groundwater);   // just before movement->tick()
@@ -37,6 +37,7 @@ class RichardsSnapshots
   VarSnapshot h_;
   VarSnapshot theta_;
   VarSnapshot S_sum_;
+  VarSnapshot q_matrix_;
   double      table_pre_  = 0.0;
   double      table_post_ = 0.0;
 
@@ -49,6 +50,7 @@ class RichardsSnapshots
     auto& vh = h_.*s;
     auto& vt = theta_.*s;
     auto& vs = S_sum_.*s;
+    auto& vq = q_matrix_.*s;
     vh.resize (n);
     vt.resize (n);
     vs.resize (n);
@@ -58,6 +60,7 @@ class RichardsSnapshots
         vt[i] = sw.Theta (i);
         vs[i] = sw.S_sum (i);
       }
+    vq = sw.q_matrix_all ();
   }
 
   void restore_arrays (Slot s, SoilWater& sw) const
@@ -65,8 +68,11 @@ class RichardsSnapshots
     const auto& vh = h_.*s;
     const auto& vt = theta_.*s;
     const auto& vs = S_sum_.*s;
+    const auto& vq = q_matrix_.*s;
     for (size_t i = 0; i < vh.size (); ++i)
       sw.set_content (i, vh[i], vt[i]);
+    for (size_t e = 0; e < vq.size (); ++e)
+      sw.set_flux (e, vq[e]);
     sw.restore_S_sum (vs);
   }
 

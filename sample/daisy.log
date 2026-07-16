@@ -1,0 +1,354 @@
+Has DAISYHOME environment variable
+Using 'C:\src\daisy' as daisy home.
+Reseting current directory to 'c:\src\daisy\sample'
+Daisy crop/soil simulation version 7.1.12. (Jun 15 2026)
+Copyright 1996 - 2016 Per Abrahamsen, Søren Hansen and KU.
+In directory 'c:\src\daisy\sample':
+Looking for file 'col_cell0.dai'
+Trying 'c:\src\daisy\sample\col_cell0.dai' (cwd) success!
+* Parsing file: 'col_cell0.dai'
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'fertilizer.dai'
+Trying 'c:\src\daisy\sample\fertilizer.dai' (cwd)
+Trying 'C:\src\daisy/lib\fertilizer.dai' success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'tillage.dai'
+Trying 'c:\src\daisy\sample\tillage.dai' (cwd)
+Trying 'C:\src\daisy/lib\tillage.dai' success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'crop.dai'
+Trying 'c:\src\daisy\sample\crop.dai' (cwd)
+Trying 'C:\src\daisy/lib\crop.dai' success!
+** Parsing file: 'crop.dai'
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'maize.dai'
+Trying 'c:\src\daisy\sample\maize.dai' (cwd)
+Trying 'C:\src\daisy/lib\maize.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'pea.dai'
+Trying 'c:\src\daisy\sample\pea.dai' (cwd)
+Trying 'C:\src\daisy/lib\pea.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'potato.dai'
+Trying 'c:\src\daisy\sample\potato.dai' (cwd)
+Trying 'C:\src\daisy/lib\potato.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'rye.dai'
+Trying 'c:\src\daisy\sample\rye.dai' (cwd)
+Trying 'C:\src\daisy/lib\rye.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'sbarley.dai'
+Trying 'c:\src\daisy\sample\sbarley.dai' (cwd)
+Trying 'C:\src\daisy/lib\sbarley.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'sugarbeet.dai'
+Trying 'c:\src\daisy\sample\sugarbeet.dai' (cwd)
+Trying 'C:\src\daisy/lib\sugarbeet.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'fodderbeet.dai'
+Trying 'c:\src\daisy\sample\fodderbeet.dai' (cwd)
+Trying 'C:\src\daisy/lib\fodderbeet.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'srape.dai'
+Trying 'c:\src\daisy\sample\srape.dai' (cwd)
+Trying 'C:\src\daisy/lib\srape.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'swheat.dai'
+Trying 'c:\src\daisy\sample\swheat.dai' (cwd)
+Trying 'C:\src\daisy/lib\swheat.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'wbarley.dai'
+Trying 'c:\src\daisy\sample\wbarley.dai' (cwd)
+Trying 'C:\src\daisy/lib\wbarley.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'wrape.dai'
+Trying 'c:\src\daisy\sample\wrape.dai' (cwd)
+Trying 'C:\src\daisy/lib\wrape.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'wwheat.dai'
+Trying 'c:\src\daisy\sample\wwheat.dai' (cwd)
+Trying 'C:\src\daisy/lib\wwheat.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'grass.dai'
+Trying 'c:\src\daisy\sample\grass.dai' (cwd)
+Trying 'C:\src\daisy/lib\grass.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'ryegrass.dai'
+Trying 'c:\src\daisy\sample\ryegrass.dai' (cwd)
+Trying 'C:\src\daisy/lib\ryegrass.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'wclover.dai'
+Trying 'c:\src\daisy\sample\wclover.dai' (cwd)
+Trying 'C:\src\daisy/lib\wclover.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'beetroot.dai'
+Trying 'c:\src\daisy\sample\beetroot.dai' (cwd)
+Trying 'C:\src\daisy/lib\beetroot.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'broccoli.dai'
+Trying 'c:\src\daisy\sample\broccoli.dai' (cwd)
+Trying 'C:\src\daisy/lib\broccoli.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'brusselssprouts.dai'
+Trying 'c:\src\daisy\sample\brusselssprouts.dai' (cwd)
+Trying 'C:\src\daisy/lib\brusselssprouts.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'celeriac.dai'
+Trying 'c:\src\daisy\sample\celeriac.dai' (cwd)
+Trying 'C:\src\daisy/lib\celeriac.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'earlypotato.dai'
+Trying 'c:\src\daisy\sample\earlypotato.dai' (cwd)
+Trying 'C:\src\daisy/lib\earlypotato.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'whitecabbage.dai'
+Trying 'c:\src\daisy\sample\whitecabbage.dai' (cwd)
+Trying 'C:\src\daisy/lib\whitecabbage.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'earlywhitecabbage.dai'
+Trying 'c:\src\daisy\sample\earlywhitecabbage.dai' (cwd)
+Trying 'C:\src\daisy/lib\earlywhitecabbage.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'onion.dai'
+Trying 'c:\src\daisy\sample\onion.dai' (cwd)
+Trying 'C:\src\daisy/lib\onion.dai' success!
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'onion_plantingofsets.dai'
+Trying 'c:\src\daisy\sample\onion_plantingofsets.dai' (cwd)
+Trying 'C:\src\daisy/lib\onion_plantingofsets.dai' success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'dk-management.dai'
+Trying 'c:\src\daisy\sample\dk-management.dai' (cwd) success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'irrigation.dai'
+Trying 'c:\src\daisy\sample\irrigation.dai' (cwd) success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'init-soil.dai'
+Trying 'c:\src\daisy\sample\init-soil.dai' (cwd) success!
+** Parsing file: 'init-soil.dai'
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'pedo-soil.dai'
+Trying 'c:\src\daisy\sample\pedo-soil.dai' (cwd) success!
+** input
+*** file
+In directory 'c:\src\daisy\sample':
+Opening absolute file name '../lib/log.dai'
+** Parsing file: '../lib/log.dai'
+*** input
+**** file
+In directory 'c:\src\daisy\sample':
+Looking for file 'log-std.dai'
+Trying 'c:\src\daisy\sample\log-std.dai' (cwd)
+Trying 'C:\src\daisy/lib\log-std.dai' success!
+Storing 'daisy.log' in 'c:\src\daisy\sample'
+* dk-taastrup.dwf: initializing weather at 1990-03-01T01:00:00
+** source_initialize
+In directory 'c:\src\daisy\sample':
+Looking for file 'dk-taastrup.dwf'
+Trying 'c:\src\daisy\sample\dk-taastrup.dwf' (cwd) success!
+* column: JB1_bmi_cell0 initialize
+** Soil
+*** Horizons
+**** horizon: Ap_JB1_Cosby initialize_base
+(CEC 10.9044 [cmolc/kg]) ; Estimated from clay and humus.
+***** hydraulic: Cosby_et_al initialize
+mod_C
+(b 3.47565 [])
+(h_b -7.62226 [cm])
+(K_sat 5.94001 [cm/h])
+(Theta_sat 0.391545 [])
+(dry_bulk_density 1.59023 [g/cm^3]) ; Estimated from porosity and texture.
+(quartz 0.671377 []) ; Estimated from texture.
+h	h	Theta	K	Cw2	M
+cm	pF		cm/h	cm^-1	cm^2/h
+0		0.391545	5.94001	0	69.5773
+-1	0	0.391544	5.93988	4.37831e-06	63.6373
+-10	1	0.357382	2.39462	0.00817827	14.6531
+-100	2	0.186698	0.00374135	0.000537157	0.200809
+-1000	3	0.0962551	5.12723e-06	2.76941e-05	0.00275192
+-15848.9	4.2	0.0434675	1.87978e-09	7.89093e-07	1.59904e-05
+-100000	5	0.0255854	9.62917e-12	7.36132e-08	5.16823e-07
+-1e+06	6	0.013191	1.3196e-14	3.79525e-09	7.08263e-09
+-1e+07	7	0.00680082	1.8084e-17	1.9567e-10	9.70617e-11
+
+**** horizon: C_JB1_Cosby initialize_base
+(CEC 3.07008 [cmolc/kg]) ; Estimated from clay and humus.
+***** hydraulic: Cosby_et_al initialize
+mod_C
+(b 3.29125 [])
+(h_b -5.75205 [cm])
+(K_sat 7.85725 [cm/h])
+(Theta_sat 0.378945 [])
+(dry_bulk_density 1.64412 [g/cm^3]) ; Estimated from porosity and texture.
+(quartz 0.682014 []) ; Estimated from texture.
+h	h	Theta	K	Cw2	M
+cm	pF		cm/h	cm^-1	cm^2/h
+0		0.378945	7.85725	0	68.8392
+-1	0	0.378941	7.85653	1.82821e-05	60.9819
+-10	1	0.319146	1.51548	0.0091224	8.21519
+-100	2	0.159135	0.00192525	0.000483509	0.100719
+-1000	3	0.0790552	2.36037e-06	2.40198e-05	0.00123482
+-15848.9	4.2	0.034145	7.57132e-10	6.54585e-07	6.27763e-06
+-100000	5	0.0195101	3.54785e-12	5.92786e-08	1.85605e-07
+-1e+06	6	0.00969222	4.3497e-15	2.94484e-09	2.27553e-09
+-1e+07	7	0.00481491	5.33276e-18	1.46294e-10	2.78982e-11
+
+*** Geometry
+(zplus -2.5 -5 -10 -20 -30 -40 -50 -60 -70 -80 -90 -100 -110 -120 -130 -140 -150); 17 cells.
+** bioclimate: default initialize
+Pet choosen: weather
+Difrad choosen: DPF
+** tertiary: old initialize
+Adding macropores to -30 cm
+** movement: vertical initialize_derived
+Bottom heat delay = -0.525677
+** OrganicStandard
+lay	humus	humus	input	input	AOM	SMB1	SMB2	SOM1	SOM2	SOM3	dSMB1	dSMB1	dSMB2	dSMB2	dSOM1	dSOM1	dSOM2	dSOM2	dSOM3	dSOM3
+	kg C/ha/cm	%	kg C/ha/cm/y	%	%	%	%	%	%	%	kg C/ha/cm/y	y^-1	kg C/ha/cm/y	y^-1	kg C/ha/cm/y	y^-1	kg C/ha/cm/y	y^-1	kg C/ha/cm/y	y^-1
+0	2520.35	2.7	164.807	6.53906	1.70895	1.19521	0.704726	73.921	22.4702	0	0	0	0	0	-14.7853	-0.00793597	0	0	-0	nan	Above SOM1 limit
+0	2520.35	2.7	164.807	6.53906	1.70895	1.29712	0.705108	67.4022	28.8866	-5.50629e-14	0	0	0	0	-11.1479	-0.00656234	-5.88215	-0.00807937	-0	0
+1	2520.35	2.7	128.667	5.1051	1.33419	1.12344	0.550899	79.3261	17.6653	0	0	0	0	0	-17.658	-0.00883209	0	0	-0	nan	Above SOM1 limit
+1	2520.35	2.7	128.667	5.1051	1.33419	1.30414	0.551576	67.7671	29.043	-8.25943e-14	0	0	0	0	-11.2083	-0.00656234	-10.4302	-0.0142492	-0	0
+2	2520.35	2.7	88.7565	3.52159	0.920348	1.04418	0.381027	85.2951	12.3594	0	0	0	0	0	-20.8303	-0.00968972	0	0	-0	nan	Above SOM1 limit
+2	2520.35	2.7	88.7565	3.52159	0.920348	1.31189	0.38203	68.17	29.2157	-1.37657e-14	0	0	0	0	-11.2749	-0.00656234	-15.4526	-0.0209857	-0	0
+3	2520.35	2.7	42.2346	1.67574	0.437945	0.95179	0.183014	92.2528	6.17441	0	0	0	0	0	-24.5282	-0.0105493	0	0	-0	nan	Above SOM1 limit
+3	2520.35	2.7	42.2346	1.67574	0.437945	1.32093	0.184396	68.6397	29.417	4.68034e-13	0	0	0	0	-11.3526	-0.00656233	-21.3071	-0.0287385	-0	-0
+4	2520.35	2.7	15.6901	0.622535	0.162696	0.899075	0.0700319	96.2228	2.64539	0	0	0	0	0	-26.6382	-0.0109841	0	0	-0	nan	Above SOM1 limit
+4	2520.35	2.7	15.6901	0.622535	0.162696	1.32609	0.0716306	68.9077	29.5319	-1.65189e-13	0	0	0	0	-11.3969	-0.00656234	-24.6475	-0.0331147	-0	0
+5	193.02	0.2	5.82884	3.01982	0.789213	0.332237	0.324656	9.78952	10.0226	78.7418	0	0	0	0	0	0	0	0	-0	-0
+6	193.02	0.2	2.16541	1.12186	0.293191	0.123425	0.120609	3.63679	3.72338	92.1026	0	0	0	0	0	0	0	0	-0	-0
+7	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+8	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+9	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+10	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+11	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+12	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+13	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+14	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+15	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+16	193.02	0.2	0	0	0	-0	-0	-0	-0	100	0	nan	0	nan	0	nan	0	nan	-0	-0
+*** Total soil summary
+Expected humus change: -917.35 [kg C/ha/y], -1.06021e-06 [y^-1].
+Expected background mineralization: 83.3955 [kg N/ha/y].
+*** Top soil summary
+	SOM1	SOM2	SOM3	SMB1	SMB2	AOM1	AOM2	total
+kg C/ha	51774.3	22189	1.17961e-10	996.366	191.853	367.286	91.8215	75610.6
+kg N/ha	3595.11	1540.76	8.1883e-12	148.711	28.6347	4.08096	7.39673	5324.69
+
+Depth	30	cm
+T	7.8	dg C
+h	-100	cm
+clay	3.9	%
+Specified input	not specified	kg C/ha/y
+Specified background mineralization	not specified	kg N/ha/y
+Zone input	1756.71	kg C/ha/y
+Zone background mineralization	0	kg C/ha/y
+Zone humus change	0	kg C/ha/y
+Time	Thu Jul 16 16:11:22 2026
+
+* Running
+Start logging
+Fertilizing 115 kg N25S-N/ha
+Sowing Spring Barley
+** JB1_bmi_cell0
+*** sow
+**** Spring Barley
+Water stress calculated from energy balance
+Nitrogen stress handled by crop nitrogen module
+*** crop: Spring Barley initialize
+init 2d
+init 1d
+** crop: Spring Barley tick
+Emerging
+** crop: Spring Barley tick
+Luxury nitrogen uptake initiated
+** crop: Spring Barley tick
+Flowering
+Irrigating 10 mm/h for 3 hours total 30 mm
+Irrigation done
+Irrigating 10 mm/h for 3 hours total 30 mm
+Irrigation done
+** crop: Spring Barley tick
+Ripe
+Harvesting Spring Barley, removing 5.55143 + 4.2269 Mg DM/ha
+Sowing Winter Barley
+** JB1_bmi_cell0
+*** sow
+**** Winter Barley
+Water stress calculated from energy balance
+Nitrogen stress handled by crop nitrogen module
+*** crop: Winter Barley initialize
+init 2d
+init 1d
+** crop: Winter Barley tick
+Emerging
+** crop: Winter Barley tick
+Luxury nitrogen uptake initiated
+** bioclimate: default tick
+*** bioclimate: default WaterDistribution
+Fresh snow made snow pack white again
+Fertilizing 37 ton pig_slurry ww/ha; water 3.4817 mm
+Using small timestep: 6m
+Back to normal size timesteps

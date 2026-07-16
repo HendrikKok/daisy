@@ -143,6 +143,8 @@ public:
   { S_sum_ = v; }
   double h_ice (std::size_t i) const
   { return h_ice_[i]; }
+  const std::vector<double>& h_ice_all () const
+  { return h_ice_; }
   double X_ice (std::size_t i) const
   { return X_ice_[i]; }
   double X_ice_old (std::size_t i) const
@@ -165,6 +167,8 @@ public:
 
   const std::vector<double>& h_all () const
   { return h_; }
+  const std::vector<double>& q_matrix_all () const
+  { return q_matrix_; }
 
   // Modify.
 public:
@@ -175,6 +179,8 @@ public:
                    const std::vector<double>& q);
   void restore_S_sum (const std::vector<double>& v)
   { S_sum_ = v; }
+  void restore_h_ice (const std::vector<double>& v)
+  { h_ice_ = v; }
   void set_tertiary (const std::vector<double>& Theta_p,
                      const std::vector<double>& q_p,
                      const std::vector<double>& S_B2M,

@@ -1,0 +1,34 @@
+;;; sample_bmi.dai --- Daisy setup for BMI coupling.
+
+(input file "fertilizer.dai")
+(input file "tillage.dai")
+(input file "crop.dai")
+(input file "dk-management.dai")
+(input file "irrigation.dai")
+(input file "init-soil.dai")
+(input file "../lib/log.dai")
+
+(defcolumn JB1_bmi_cell0 JB1_init_Cosby
+  "JB1 column with API-controlled groundwater table for BMI coupling."
+  (Groundwater api))
+
+(weather default "dk-taastrup.dwf")
+
+(time 1990 3 1 1)
+(stop 1994 4 1 1)
+
+(column "JB1_bmi_cell0")
+
+(manager activity
+  (while "SBarley w. MF"
+    (repeat irrigate_30_tensiometer_overhead))
+  "WBarley w. OF"
+  (while "WRape w. MF"
+    (activity irrigate_30_content_overhead irrigate_30_content_overhead))
+  "SBarley & Pea")
+
+(output ("Soil Water Potential"
+         (when daily)
+         (where "soil_h_cell0.dlf")))
+
+;;; sample_bmi.dai ends here
