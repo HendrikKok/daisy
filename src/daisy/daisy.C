@@ -584,14 +584,26 @@ Daisy::set_groundwater_table (double cm, unsigned int pos)
   if (col) col->set_groundwater_table (cm);
 }
 
-auto Daisy::perturbation_tick (double dh_cm, double dt_days, unsigned int pos)
+auto Daisy::perturbation_tick (double dh_cm, double dt_days, bool do_reset, unsigned int pos)
   -> std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
 {
   Column* col = impl->field->find (pos);
-  return col ? col->perturbation_tick (dh_cm, dt_days)
+  return col ? col->perturbation_tick (dh_cm, dt_days, do_reset)
              : std::make_tuple (std::vector<double>{},
                                 std::vector<double>{},
                                 std::vector<double>{});
+}
+
+double Daisy::reset_saturated_pressure (unsigned int pos)
+{
+  Column* col = impl->field->find (pos);
+  return col ? col->reset_saturated_pressure () : 0.0;
+}
+
+size_t Daisy::water_fail_count (unsigned int pos) const
+{
+  Column* col = impl->field->find (pos);
+  return col ? col->water_fail_count () : 0u;
 }
 
 double
@@ -605,6 +617,13 @@ Daisy::get_bottom_flux (unsigned int pos) const
 {
   Column* col = impl->field->find (pos);
   return col ? col->get_bottom_flux () : 0.0;
+}
+
+double
+Daisy::get_root_depth (unsigned int pos) const
+{
+  Column* col = impl->field->find (pos);
+  return col ? col->get_root_depth () : 0.0;
 }
 
 std::vector<double>

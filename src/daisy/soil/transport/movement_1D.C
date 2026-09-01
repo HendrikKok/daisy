@@ -397,7 +397,7 @@ Movement1D::tick (const Soil& soil, SoilWater& soil_water,
       q[e] = soil_water.q_matrix (e);
       q_p[e] = soil_water.q_tertiary (e);
     }
-  tick_water (*geo, soil, soil_heat, surface, groundwater, 
+  tick_water (*geo, soil, soil_heat, surface, groundwater,
               S_sum, h_old, Theta_old, h_ice, h, Theta,
               q, q_p, dt, msg);
   soil_water.set_matrix (h, Theta, q);

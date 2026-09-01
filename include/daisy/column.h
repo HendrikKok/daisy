@@ -142,9 +142,11 @@ public:
   virtual double get_groundwater_table () const { return 0.0; }  // [cm], neg = below surface
   virtual void   set_groundwater_table (double) {}               // [cm]
   virtual double get_bottom_flux ()       const { return 0.0; }  // [cm/h], + = downward
+  virtual double get_root_depth ()        const { return 0.0; }  // [cm] below surface, 0 = no roots
   virtual std::vector<double> get_flux_array ()      const { return {}; } // [cm/h], bottom edge of each cell
   virtual std::vector<double> get_h_array ()         const { return {}; } // [cm], pressure head per layer
   virtual std::vector<double> get_theta_array ()     const { return {}; } // [-], volumetric water content
+
   virtual std::vector<double> get_theta_sat_array () const { return {}; } // [-], saturated water content
   virtual double get_runoff_rate ()                  const { return 0.0; } // [mm/day]
   virtual double              get_column_area ()   const;        // [cm²]
@@ -158,12 +160,29 @@ public:
   // Perturb GW table by dh_cm, re-run Richards (only), then restore to the
   // post-tick state.  Returns {theta_perturbed, flux_mm_d, h_cm} arrays.
   // Sy is computed by the caller: Sy = Σ((θ_C−θ_B)·Δz) / dh.
+  // do_reset: if true (default), cells newly submerged by the perturbed GW
+  // table are forced to hydrostatic equilibrium before the replay (see
+  // equilibrate_saturated_zone()); if false, the replay starts from the
+  // unmodified state and lets Richards alone respond to the shifted table.
   // Default: no-op returning empty arrays.
   virtual std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick (double /*dh_cm*/, double /*dt_days*/)
+    perturbation_tick (double /*dh_cm*/, double /*dt_days*/, bool /*do_reset*/ = true)
     { return std::make_tuple (std::vector<double>{},
                               std::vector<double>{},
                               std::vector<double>{}); }
+
+  // Set saturated cells (hydrostatic h >= 0) to correct h and theta, reset
+  // h_old.  Unsaturated cells are untouched.  Returns column-integrated
+  // delta_W [cm]: the water-content change in the updated cells (diagnostic;
+  // equals the BC contribution already accounted for by MODFLOW).
+  virtual double reset_saturated_pressure () { return 0.0; }
+
+  // Total (never reset) count of matrix-water Richards solver failures
+  // (i.e. ticks where the solver fell back to a lower-fidelity model) across
+  // the whole simulation so far.  Callers can diff this before/after an
+  // update_until() call to detect whether that specific step required a
+  // fallback.  Default: always 0 (no movement model / not applicable).
+  virtual size_t water_fail_count () const { return 0u; }
 
 
   // Current development stage for the crop named "crop", or

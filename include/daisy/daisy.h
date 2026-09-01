@@ -71,11 +71,16 @@ public:
   double get_groundwater_table (unsigned int pos = 0u) const; // [cm]
   void   set_groundwater_table (double cm, unsigned int pos = 0u);
   std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick (double dh_cm, double dt_days, unsigned int pos = 0u);
+    perturbation_tick (double dh_cm, double dt_days, bool do_reset = true, unsigned int pos = 0u);
+  double reset_saturated_pressure (unsigned int pos = 0u); // [cm] delta_W
+  // Total (never reset) count of matrix-water Richards solver fallbacks
+  // for the column, accumulated over the whole simulation.
+  size_t water_fail_count (unsigned int pos = 0u) const;
   /** Hours from simulation start to the configured stop time, or -1 if open-ended. */
   double stop_duration_hours() const;
 
   double              get_bottom_flux      (unsigned int pos = 0u) const; // [cm/h]
+  double              get_root_depth       (unsigned int pos = 0u) const; // [cm below surface]
   std::vector<double> get_flux_array       (unsigned int pos = 0u) const; // [cm/h]
   std::vector<double> get_h_array          (unsigned int pos = 0u) const; // [cm]
   std::vector<double> get_theta_array      (unsigned int pos = 0u) const; // [-]

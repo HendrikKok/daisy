@@ -147,15 +147,22 @@ PYBIND11_MODULE(daisy_bmi, m)
 
     .def("perturbation_tick",
          &DaisyAPI::perturbation_tick,
-         py::arg("dh_cm")   = 1.0,
-         py::arg("dt_days") = 1.0,
-         py::arg("col")     = 0u,
+         py::arg("dh_cm")    = 1.0,
+         py::arg("dt_days")  = 1.0,
+         py::arg("do_reset") = true,
+         py::arg("col")      = 0u,
          R"pbdoc(
  Run matched per-substep Richards replays at the real and perturbed GW tables.
  Daisy is always restored to the real post-tick result (RAII guard).
 
  The step accumulator is cleared automatically after each call, so the next
  update_until() starts a fresh day.
+
+ do_reset : bool, default True
+     If True, cells newly submerged by the perturbed GW table are forced to
+     hydrostatic equilibrium before the replay (equilibrate_saturated_zone).
+     If False, the perturbed replay is left to Richards alone -- useful to
+     test how much this forcing contributes to the resulting Sy estimate.
 
  Returns
  -------
@@ -169,5 +176,46 @@ PYBIND11_MODULE(daisy_bmi, m)
    api.update_until(t + 1.0)          # runs 24 internal hourly steps
    delta_theta, _, _ = api.perturbation_tick(dh_cm)
    Sy = sum(delta_theta[i] * dz_cm[i] for i in range(n)) / dh_cm
+         )pbdoc")
+
+    .def("reset_saturated_pressure",
+         &DaisyAPI::reset_saturated_pressure,
+         py::arg("col") = 0u,
+         R"pbdoc(
+ Set saturated cells (hydrostatic h >= 0) to correct pressure and theta,
+ then reset h_old.  Unsaturated cells are untouched.
+
+ Call after set_value("groundwater__depth", ...) and before the next
+ update_until() for any non-sandy soil.  Without this, Richards cannot
+ propagate the new GWT within one tick (diffusion timescale L^2*C/K can
+ be days-to-months for loam/clay), causing underestimated Sy and MODFLOW
+ head drift.
+
+ The returned delta_W is diagnostic only: it represents the water already
+ accounted for in MODFLOW's head change.  No correction to MODFLOW is needed.
+
+ Returns
+ -------
+ float
+     Column-integrated delta_W [cm].  Positive = water added to saturated
+     cells.  Should converge to ~0 after initialisation in a closed system.
+         )pbdoc")
+
+    .def("water_fail_count",
+         &DaisyAPI::water_fail_count,
+         py::arg("col") = 0u,
+         R"pbdoc(
+ Cumulative (never reset) count of matrix-water Richards solver fallbacks
+ for the column, accumulated over the whole simulation so far.
+
+ Diff this value before and after an update_until() call to detect whether
+ that specific step required a fallback to a lower-fidelity solver (e.g. to
+ decide whether to trust a subsequent Sy estimate or keep the previous
+ value instead).
+
+ Returns
+ -------
+ int
+     Cumulative fallback count for the column.
          )pbdoc");
 }

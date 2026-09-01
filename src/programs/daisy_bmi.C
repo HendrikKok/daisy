@@ -280,7 +280,7 @@ double DaisyBMI::get_cumulative_runoff() const     { return 0.0; }
 // ===== CROP STUBS =====
 
 double DaisyBMI::get_leaf_area_index() const       { return 0.0; }
-double DaisyBMI::get_root_depth() const            { return 0.0; }
+double DaisyBMI::get_root_depth() const            { return daisy().get_root_depth(); }  // [cm]
 double DaisyBMI::get_aboveground_biomass() const   { return 0.0; }
 
 // ===== SOIL STUBS =====

@@ -10,6 +10,9 @@ python/src/*.egg-info/
 # build artifacts copied into the Python package by CMake
 python/src/daisy/*.pyd
 python/src/daisy/*.dll
+.vs
+doc/daisy-mf6-coupling.md
+doc/equilibrate-pressure-implementation.md
 
 # local machine-specific CMake overrides (paths, Python envs, etc.)
 CMakeUserPresets.json

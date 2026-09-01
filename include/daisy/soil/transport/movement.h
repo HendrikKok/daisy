@@ -71,6 +71,13 @@ protected:
 public:
   virtual void summarize (Treelog& msg) const;
 
+  // Total (never reset) count of matrix-water solver failures across all
+  // fallback levels.  Used by callers to detect whether a Richards
+  // convergence failure occurred since a previous checkpoint (e.g. before
+  // and after an update_until() call), since water_failure_level itself is
+  // reset every tick by clear().
+  size_t water_fail_count () const;
+
   // Tertiary transport.
 protected:
   std::unique_ptr<Tertiary> tertiary;

@@ -306,7 +306,7 @@ Specified background mineralization	not specified	kg N/ha/y
 Zone input	1756.71	kg C/ha/y
 Zone background mineralization	0	kg C/ha/y
 Zone humus change	0	kg C/ha/y
-Time	Thu Jul 16 16:11:22 2026
+Time	Tue Sep  1 15:55:17 2026
 
 * Running
 Start logging
@@ -328,11 +328,9 @@ Luxury nitrogen uptake initiated
 Flowering
 Irrigating 10 mm/h for 3 hours total 30 mm
 Irrigation done
-Irrigating 10 mm/h for 3 hours total 30 mm
-Irrigation done
 ** crop: Spring Barley tick
 Ripe
-Harvesting Spring Barley, removing 5.55143 + 4.2269 Mg DM/ha
+Harvesting Spring Barley, removing 5.55176 + 4.22688 Mg DM/ha
 Sowing Winter Barley
 ** JB1_bmi_cell0
 *** sow

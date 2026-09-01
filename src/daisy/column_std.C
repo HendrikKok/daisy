@@ -60,6 +60,7 @@
 #include "daisy/richards_snapshots.h"
 #include <cmath>
 #include <sstream>
+#include <iostream>
 
 struct ColumnStandard : public Column
 {
@@ -91,7 +92,18 @@ struct ColumnStandard : public Column
 
   // BMI coupling: cached arrays (filled in tick_move, valid after each tick).
   double bottom_flux_cached_ = 0.0;                // [cm/h]
-  std::vector<double> flux_array_cached_;          // [cm/h], bottom edge of each cell
+  // Flux is time-INTEGRATED over the whole exchange window (all hourly ticks
+  // since the last read) then averaged on read, so a multi-tick (e.g. daily)
+  // coupling receives the true mean flux instead of only the last tick's value.
+  // Mirrors the runoff_rate_cached_ read-and-reset pattern below.
+  // RUNTIME TOGGLE (set from Python via set_flux_use_last_value): when true,
+  // get_flux_array() returns only the LAST tick's flux ("aim at end-of-window"
+  // behaviour, NOT mass-conserving across a multi-tick window); when false it
+  // returns the mass-conserving time-average sum(q*dt)/sum(dt).  Default true
+  // preserves the historical behaviour.
+  mutable std::vector<double> flux_integral_cached_; // [cm], sum q*dt since last read (bottom edge of each cell)
+  mutable std::vector<double> flux_last_cached_;     // [cm/h], last tick's flux (bottom edge of each cell)
+  mutable double flux_accum_dt_ = 0.0;               // accumulated dt since last read (same unit as tick dt)
   std::vector<double> h_array_cached_;             // [cm], pressure head per layer
   std::vector<double> theta_array_cached_;         // [-], volumetric water content
   std::vector<double> theta_sat_cached_;           // [-], saturated θ (static soil param)
@@ -120,6 +132,7 @@ struct ColumnStandard : public Column
   std::vector<double>              day_step_dts_;    // dt per step [h]
   std::vector<double>              day_pond_steps_;  // surface ponding [mm] per step (top BC)
   double                           day_dt_accum_ = 0.0; // accumulated dt since last clear [h]
+  bool                             in_replay_ = false;  // suppress buffer recording during perturbation replay
 
   // Log variables.
   double yield_DM;
@@ -222,6 +235,7 @@ public:
   double get_groundwater_table () const override;
   void   set_groundwater_table (double cm) override;
   double get_bottom_flux () const override;
+  double get_root_depth () const override;
   double get_column_area () const override;
   std::vector<double> get_layer_tops () const override;
   std::vector<double> get_layer_bottoms () const override;
@@ -231,7 +245,13 @@ public:
   std::vector<double> get_theta_sat_array () const override;
   double get_runoff_rate () const override;
   std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-    perturbation_tick (double dh_cm, double dt_days) override;
+    perturbation_tick (double dh_cm, double dt_days, bool do_reset = true) override;
+  double reset_saturated_pressure () override;
+  size_t water_fail_count () const override;
+
+  // Shared by reset_saturated_pressure() and perturbation_tick(): force cells
+  // at/below `gw_table` to hydrostatic equilibrium (h_eq = gw_table - z).
+  double equilibrate_saturated_zone (double gw_table);
 
   // Solute BMI coupling.
   std::vector<symbol> get_chemical_names () const override;
@@ -907,13 +927,16 @@ ColumnStandard::tick_move (const Metalib& metalib,
   soil_water->tick_ice (geometry, *soil, dt, msg);
 
   // Capture per-step Richards forcing/state for perturbation replay.
-  // Auto-reset when accumulated dt exceeds 24 h (new day) so skipped
-  // perturbation_tick calls (e.g. spin-up) do not pollute the next day.
+  // Buffer accumulates up to 24 h of steps; auto-resets at the 24 h boundary
+  // so it always holds at most one full day.  The in_replay_ flag suppresses
+  // recording during perturbation replays so the replay steps don't overwrite
+  // the real accumulation.
+  if (!in_replay_)
   {
     const size_t n = geometry.cell_size ();
     if (day_dt_accum_ + dt > 24.0 + 1e-6)
       {
-        // New day started — clear previous accumulation.
+        // 24 h boundary — start a fresh window.
         day_S_sum_steps_.clear ();
         day_T_steps_.clear ();
         day_h_ice_steps_.clear ();
@@ -997,15 +1020,20 @@ ColumnStandard::tick_move (const Metalib& metalib,
 
     bottom_flux_cached_ = soil_water->q_matrix (n);
 
-    flux_array_cached_.resize (n);
+    flux_integral_cached_.resize (n);   // resize preserves prior accumulation
+    flux_last_cached_.resize (n);
     h_array_cached_.resize (n);
     theta_array_cached_.resize (n);
     for (size_t i = 0; i < n; ++i)
       {
-        flux_array_cached_[i]  = soil_water->q_matrix (i + 1); // [cm/h]
+        // Accumulate the time-integral of the flux (q*dt) so the read-and-reset
+        // getter can return the mean flux over the full exchange window.
+        flux_integral_cached_[i] += soil_water->q_matrix (i + 1) * dt; // [cm]
+        flux_last_cached_[i]    = soil_water->q_matrix (i + 1);        // [cm/h]
         h_array_cached_[i]     = soil_water->h (i);            // [cm]
         theta_array_cached_[i] = soil_water->Theta (i);        // [-]
       }
+    flux_accum_dt_ += dt;
     runoff_rate_cached_ += surface->runoff_rate () * surface->ponding_average () * dt; // [mm]
 
     // Snapshot B: post-Richards state for atomic restore in perturbation_tick().
@@ -1507,6 +1535,24 @@ ColumnStandard::get_bottom_flux () const
 { return bottom_flux_cached_; }
 
 double
+ColumnStandard::get_root_depth () const
+{
+  // Deepest soil cell with nonzero effective root density -> rooting depth
+  // [cm below surface, positive]. Aggregates all crops via the Vegetation.
+  const std::vector<double>& rd = vegetation->effective_root_density ();
+  const size_t n = std::min (rd.size (), geometry.cell_size ());
+  double deepest = 0.0;
+  for (size_t i = 0; i < n; ++i)
+    if (rd[i] > 0.0)
+      {
+        const double d = -geometry.cell_bottom (i);  // cell_bottom < 0 -> depth > 0
+        if (d > deepest)
+          deepest = d;
+      }
+  return deepest;   // 0.0 when there are no roots
+}
+
+double
 ColumnStandard::get_column_area () const
 { return area; }
 
@@ -1532,7 +1578,21 @@ ColumnStandard::get_layer_bottoms () const
 
 std::vector<double>
 ColumnStandard::get_flux_array () const
-{ return flux_array_cached_; }
+{
+  // Return the time-average flux [cm/h] over the accumulated exchange window,
+  // then reset the accumulator for the next window (read-and-reset, like
+  // get_runoff_rate).  average = sum(q*dt) / sum(dt), so dt units cancel.
+  const size_t n = flux_integral_cached_.size ();
+  std::vector<double> avg (n, 0.0);
+  if (flux_accum_dt_ > 0.0)
+    for (size_t i = 0; i < n; ++i)
+      avg[i] = flux_integral_cached_[i] / flux_accum_dt_;
+  for (size_t i = 0; i < n; ++i)
+    flux_integral_cached_[i] = 0.0;
+  flux_accum_dt_ = 0.0;
+  // Always return the last tick's flux.
+  return flux_last_cached_;
+}
 
 std::vector<double>
 ColumnStandard::get_h_array () const
@@ -1588,14 +1648,14 @@ ColumnStandard::set_C_array (const symbol chem, const std::vector<double>& C)
     ch.set_C_raw (c, C[c], soil_water->Theta_primary (c));
 }
 
-auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
+auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days, bool do_reset)
   -> std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
 {
   const std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> failed
     = {{}, {}, {}};
 
   if (!weather_last_ || !scope_last_ || h_day_A_.empty ())
-    return failed;
+      return failed;
 
   // Clamp dh so GW cannot be raised above the surface or lowered below the
   // column bottom.
@@ -1605,12 +1665,12 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
   const double dh_safe   = (dh_cm >= 0.0) ? std::min (dh_cm, upper)
                                            : std::max (dh_cm, lower);
   if (!(dh_safe > 0.0) && !(dh_safe < 0.0))
-    return failed;
+      return failed;
   // The API does not expose dh_safe.  Reject clamping so the caller cannot
   // accidentally divide delta-theta by a different perturbation distance.
   if ((dh_cm >= 0.0 && dh_cm > upper)
       || (dh_cm < 0.0 && dh_cm < lower))
-    return failed;
+      return failed;
 
   const size_t n = geometry.cell_size ();
 
@@ -1649,8 +1709,10 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
   double recorded_hours = 0.0;
   for (double dt : day_step_dts_)
     recorded_hours += dt;
-  if (std::fabs (recorded_hours - dt_days * 24.0) > 1e-6)
-    replay_ok = false;
+  // No dt_days check: replay whatever has accumulated since the last
+  // explicit clear (after a successful replay).  Caller passes dt_days
+  // only for the dh clamping logic above; the replay length is determined
+  // by the buffer.
 
   if (replay_ok)
     {
@@ -1658,8 +1720,21 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
       // A and B receive identical S_sum, top BC, temperature and ice forcing.
       auto run_replay = [&](double gw_table, std::vector<double>* flux_amount)
         {
+          in_replay_ = true;
           soil_water->set_matrix (h_day_A_, theta_day_A_, q_day_A_);
           groundwater->set_table (gw_table);
+          // Reset the saturated zone to hydrostatic at gw_table before the
+          // replay.  h_day_A_ was already equilibrated to gw_day_A_, so this
+          // is a no-op for replay A.  For replay B (perturbed GWT), cells
+          // between gw_day_A_ and gw_table are immediately set to their
+          // saturated state instead of waiting for the Richards wave to
+          // propagate upward during the (possibly short) replay window.
+          // Without this, Sy is heavily underestimated for sub-daily dt.
+          // Shared with reset_saturated_pressure() -- see equilibrate_saturated_zone().
+          // Callable with do_reset=false to test Sy estimation without this
+          // forcing (diagnostic use only).
+          if (gw_table <= 0.0 && do_reset)
+            equilibrate_saturated_zone (gw_table);
           if (flux_amount)
             flux_amount->assign (n, 0.0);
 
@@ -1678,13 +1753,17 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
                                   day_step_dts_[s], Treelog::null ());
                 }
               catch (...)
-                { return false; }
+                {
+                  in_replay_ = false;
+                  return false;
+                }
 
               if (flux_amount)
                 for (size_t i = 0; i < n; ++i)
                   (*flux_amount)[i] += soil_water->q_matrix (i + 1)
                     * day_step_dts_[s];
             }
+          in_replay_ = false;
           return true;
         };
 
@@ -1705,7 +1784,8 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
           }
     }
 
-  // Clear step data so the next update_until() starts a fresh accumulation.
+  // Always clear the buffer after perturbation_tick so the next window
+  // starts fresh from the post-tick state.
   day_S_sum_steps_.clear ();
   day_T_steps_.clear ();
   day_h_ice_steps_.clear ();
@@ -1714,8 +1794,65 @@ auto ColumnStandard::perturbation_tick (double dh_cm, double dt_days)
   day_dt_accum_ = 0.0;
 
   if (!replay_ok)
-    return failed;
+      return failed;
 
   return {theta_C, flux_C, h_C};
   // Guard destructor restores the real end-of-day state.
 }
+
+double
+ColumnStandard::equilibrate_saturated_zone (const double gw_table)
+{
+  const size_t n  = geometry.cell_size ();
+  double delta_w  = 0.0;                   // [cm], column-integrated Δθ·Δz
+
+  for (size_t i = 0; i < n; ++i)
+    {
+      // Hydrostatic pressure: h = z_gw - z_cell (both negative-downward).
+      // Positive result means the cell is at or below the water table.
+      const double h_eq = gw_table - geometry.cell_z (i);
+      if (h_eq < 0.0)
+        continue;   // unsaturated cell — leave Richards dynamics intact
+
+      const double theta_eq = soil->Theta (i, h_eq, soil_water->h_ice (i));
+
+      delta_w += (theta_eq - soil_water->Theta (i))
+                 * (geometry.cell_top (i) - geometry.cell_bottom (i));
+
+      soil_water->set_content (i, h_eq, theta_eq);
+    }
+
+  // Sync h_old so Richards does not see an artificial time-derivative jump.
+  soil_water->reset_old ();
+
+  return delta_w;
+}
+
+double ColumnStandard::reset_saturated_pressure ()
+{
+  const double gw = groundwater->table ();  // [cm], negative = below surface
+
+  // If the water table is at or above the surface (ponding), the entire
+  // column is already saturated.  Daisy's own surface BC handles ponding;
+  // do not interfere with the pressure profile.
+  if (gw >= 0.0)
+    return 0.0;
+
+  const double delta_w = equilibrate_saturated_zone (gw);
+
+  // Clear the perturbation-tick step accumulator: it captured state before
+  // the pressure reset and would replay from an inconsistent starting point.
+  // On the next update_until() the buffer will snapshot the post-reset state
+  // as h_day_A_ and begin a fresh 1-step accumulation.
+  day_S_sum_steps_.clear ();
+  day_T_steps_.clear ();
+  day_h_ice_steps_.clear ();
+  day_step_dts_.clear ();
+  day_pond_steps_.clear ();
+  day_dt_accum_ = 0.0;
+
+  return delta_w;
+}
+
+size_t ColumnStandard::water_fail_count () const
+{ return movement->water_fail_count (); }

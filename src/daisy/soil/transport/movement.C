@@ -76,6 +76,15 @@ Movement::solute_failure (const size_t level)
   solute_fail[level]++;
 }
 
+size_t
+Movement::water_fail_count () const
+{
+  size_t total = 0;
+  for (size_t i = 0; i < water_fail.size (); i++)
+    total += water_fail[i];
+  return total;
+}
+
 void 
 Movement::summarize (Treelog& msg) const
 {
